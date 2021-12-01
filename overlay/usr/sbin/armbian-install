@@ -1,0 +1,113 @@
+#!/bin/bash
+# Install armbian to EMMC, ignore U-Boot
+
+# first 700MB is reserved for the SOC of s905x phicomm-n1
+SKIP=700
+
+BOOT=128
+
+echo "Start install armbian to EMMC..."
+
+root_devname=$(df / | tail -n1 | awk '{print $1}' | awk -F '/' '{print substr($3, 1, length($3)-2)}')
+if lsblk -l | grep -E "^${root_devname}boot0" >/dev/null; then
+    echo "you are running in EMMC mode, please boot system with USB or TF card!"
+    exit 1
+fi
+
+install_emmc="$(lsblk -l -o NAME | grep -oE '(mmcblk[0-9]?boot0)' | sed "s/boot0//g")"
+if [[ "${install_emmc}" == "" ]]; then
+    echo "No EMMC can be found to install the armbian system!"
+    exit 1
+fi
+
+DEV_EMMC="/dev/${install_emmc}"
+echo "EMMC: ${DEV_EMMC}"
+
+echo "Start create MBR and partittion"
+exists_pts=$(parted ${DEV_EMMC} print | grep 'primary' | wc -l)
+if [ "${exists_pts}" -gt "0" ]; then
+    i=1
+    while [ "${i}" -le "${exists_pts}" ]; do
+        parted -s ${DEV_EMMC} rm $i 2>/dev/null
+        let i++
+    done
+fi
+parted -s "${DEV_EMMC}" mklabel msdos 2>/dev/null
+parted -s "${DEV_EMMC}" mkpart primary fat32 $((SKIP * 1024 * 1024))b $(((SKIP + BOOT) * 1024 * 1024 - 1))b 2>/dev/null
+parted -s "${DEV_EMMC}" mkpart primary ext4 $(((SKIP + BOOT) * 1024 * 1024))b 100% 2>/dev/null
+
+echo "Start copy system for EMMC."
+mkdir -p /ddbr
+chmod 777 /ddbr
+
+DIR_INSTALL="/ddbr/install"
+
+if [ -d ${DIR_INSTALL} ]; then
+    rm -rf ${DIR_INSTALL}
+fi
+mkdir -p ${DIR_INSTALL}
+
+PART_BOOT="${DEV_EMMC}p1"
+if grep -q ${PART_BOOT} /proc/mounts; then
+    echo "Unmounting BOOT partiton."
+    umount -f ${PART_BOOT}
+fi
+echo "Formatting BOOT partition..."
+mkfs.vfat ${PART_BOOT}
+UUID_BOOT=$(blkid -o value -s UUID ${PART_BOOT})
+
+PART_ROOT="${DEV_EMMC}p2"
+if grep -q ${PART_ROOT} /proc/mounts; then
+    echo "Unmounting ROOT partiton."
+    umount -f ${PART_ROOT}
+fi
+echo "Formatting ROOT partition..."
+mkfs.ext4 -F ${PART_ROOT}
+UUID_ROOT=$(blkid -o value -s UUID ${PART_ROOT})
+
+mount -o rw ${PART_BOOT} ${DIR_INSTALL}
+
+echo "Start copy BOOT partition data..."
+cp -rf /boot/* ${DIR_INSTALL} && sync
+
+echo "Edit init config..."
+sed -i -e '/rootdev=/d' "${DIR_INSTALL}/armbianEnv.txt"
+echo "rootdev=UUID=${UUID_ROOT}" >> "${DIR_INSTALL}/armbianEnv.txt"
+
+sync
+
+umount ${DIR_INSTALL}
+
+echo "Start copy ROOT partition data..."
+mount -t ext4 ${PART_ROOT} ${DIR_INSTALL}
+
+cd /
+mkdir -p ${DIR_INSTALL}/{boot/,dev/,media/,mnt/,proc/,run/,sys/,tmp/} && sync
+COPY_SRC="bin etc home lib opt root sbin selinux srv usr var"
+for src in ${COPY_SRC}; do
+    echo "copy [ ${src} ] ..."
+    tar -cf - ${src} | (
+        cd ${DIR_INSTALL}
+        tar -xf -
+    )
+    sync
+done
+
+echo "Edit fstab config..."
+rm -f ${DIR_INSTALL}/etc/fstab 2>/dev/null && sync
+cat >${DIR_INSTALL}/etc/fstab <<EOF
+/dev/root	/	ext4	defaults,noatime,errors=remount-ro	0 1
+UUID=${UUID_BOOT}	/boot	vfat	defaults	0 0
+tmpfs	/tmp	tmpfs	defaults,nosuid	0 0
+EOF
+sync
+
+cd /
+umount ${DIR_INSTALL}
+sleep 3
+rm -rf /ddbr
+
+echo "*************************************************************************************************"
+echo "Successful installed, please unplug the USB, re-insert the power supply to start the armbian."
+echo "*************************************************************************************************"
+exit 0
