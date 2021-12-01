@@ -17,15 +17,12 @@ jobs:
         repository: armbian/build
         path: build
         ref: master
-        clean: false
 
     - name: checkout
       uses: actions/checkout@v2
       with:
-        fetch-depth: 1
         repository: whiler/armbian-n1-userpatch
-        path: build/userpatches
-        clean: false
+        path: userpatches
 
     - name: build armbian image
       id: compile
