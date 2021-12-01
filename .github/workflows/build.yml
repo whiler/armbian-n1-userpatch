@@ -16,10 +16,8 @@ jobs:
       run: |
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E apt-get -qq update
-        sudo -E apt-get -qq install $(curl -fsSL git.io/ubuntu-2004-server)
         sudo -E apt-get -qq install locales
         sudo -E apt-get -qq autoremove --purge
-        sudo -E apt-get -qq clean
         sudo -E locale-gen en_US.UTF-8
         sudo -E hostnamectl set-hostname builder
 
@@ -41,9 +39,8 @@ jobs:
       id: compile
       run: |
         mv userpatches build/userpatches
-        cd build/
-        sudo chmod +x compile.sh
-        sudo ./compile.sh
+        cd build
+        sudo bash compile.sh
         cd output/images
         echo "FILEPATH=$PWD" >> $GITHUB_ENV
         echo "FILEDATE=$(date +"%Y%m%dT%H%M")" >> $GITHUB_ENV
