@@ -1,0 +1,84 @@
+name: build armbian image
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+    - name: initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL git.io/ubuntu-2004-server)
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+
+    - name: fetch armbian/build
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        repository: armbian/build
+        path: build
+        ref: master
+        clean: false
+
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        path: build/userpatches
+
+    - name: build armbian image
+      id: compile
+      run: |
+        cd build/
+        sudo chmod +x compile.sh
+        sudo ./compile.sh
+        cd output/images
+        echo "FILEPATH=$PWD" >> $GITHUB_ENV
+        echo "FILEDATE=$(date +"%Y%m%dT%H%M")" >> $GITHUB_ENV
+        echo "::set-output name=status::success"
+
+    - name: upload image to actions
+      uses: kittaakos/upload-artifact-as-is@master
+      if: steps.compile.outputs.status == 'success' && !cancelled()
+      with:
+        path: ${{ env.FILEPATH }}/
+
+    - name: upload image to release
+      id: release
+      uses: ncipollo/release-action@v1
+      if: steps.compile.outputs.status == 'success' && !cancelled()
+      with:
+        tag: ${{ env.FILEDATE }}
+        artifacts: ${{ env.FILEPATH }}/*
+        allowUpdates: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+        body: |
+          this is armbian image for Phicomm N1
+          Default username: root
+          Default password: 1234
+          Install to EMMC command: armbian-install
+
+    - name: delete older releases
+      uses: dev-drprasad/delete-older-releases@master
+      with:
+        keep_latest: 7
+        delete_tags: true
+        delete_tag_pattern: _
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: delete older workflow runs and artifacts
+      uses: Mattraks/delete-workflow-runs@main
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
+        retain_days: 180
+        keep_minimum_runs: 3
