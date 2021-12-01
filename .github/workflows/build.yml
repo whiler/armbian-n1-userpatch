@@ -37,6 +37,10 @@ jobs:
     - name: build armbian image
       id: compile
       run: |
+        uname -a
+        hostname
+        pwd
+        ls
         cd build/
         sudo chmod +x compile.sh
         sudo ./compile.sh
