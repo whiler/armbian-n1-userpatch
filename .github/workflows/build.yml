@@ -10,6 +10,17 @@ jobs:
     if: github.event.repository.owner.id == github.event.sender.id
 
     steps:
+    - name: initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL git.io/ubuntu-2004-server)
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo -E hostnamectl set-hostname builder
+
     - name: fetch armbian/build
       uses: actions/checkout@v2
       with:
@@ -27,10 +38,7 @@ jobs:
     - name: build armbian image
       id: compile
       run: |
-        uname -a
-        hostname
-        pwd
-        ls
+        mv userpatches build/userpatches
         cd build/
         sudo chmod +x compile.sh
         sudo ./compile.sh
