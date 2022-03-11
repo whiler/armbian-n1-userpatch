@@ -6,6 +6,7 @@ build minimal armbian image for phicomm-n1.
 git clone https://github.com/armbian/build
 cd build
 git clone https://github.com/whiler/armbian-n1-userpatch userpatches
+git checkout $(awk -F '\"' '/LIB_TAG/ {print $2}' userpatches/config-phicomm-n1.conf)
 ./compile.sh
 ```
 
