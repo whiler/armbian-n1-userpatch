@@ -1,0 +1,6 @@
+# these files will be copied from template
+Dockerfile
+Vagrantfile
+config-docker.conf
+config-example.conf
+config-vagrant.conf
