@@ -1,7 +1,7 @@
 #!/bin/bash
 # Install armbian to EMMC, ignore U-Boot
 
-# first 700MB is reserved for the SOC of s905x phicomm-n1
+# first 700MB is reserved for the SoC of s905x phicomm-n1
 SKIP=700
 
 BOOT=128
