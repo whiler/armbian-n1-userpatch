@@ -26,5 +26,11 @@ jobs:
 
     - name: build armbian image
       run: |
-        git checkout $(awk -F '\"' '/LIB_TAG/ {print $2}' userpatches/config-phicomm-n1.conf)
-        sudo bash compile.sh
+        VER=$(awk -F '\"' '/LIB_TAG/ {print $2}' userpatches/config-phicomm-n1.conf)
+        pushd userpatches
+          REV=$(git rev-parse --short HEAD)
+          RELEASE="${VER}-${REV}"
+        popd
+        git checkout "${VER}"
+        echo "${RELEASE}"
+        sudo bash compile.sh docker
