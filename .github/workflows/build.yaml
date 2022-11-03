@@ -5,13 +5,13 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: initialization environment
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
-          sudo -E apt-get -qq update
-          sudo -E apt-get -qq upgrade -y
-          sudo -E apt-get -qq autoremove --purge
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq upgrade -y
+        sudo -E apt-get -qq autoremove --purge
 
     - name: fetch armbian/build
       uses: actions/checkout@v3
