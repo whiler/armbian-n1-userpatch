@@ -22,3 +22,4 @@ jobs:
         hostname
         pwd
         ls -lh
+        git checkout $(awk -F '\"' '/LIB_TAG/ {print $2}' userpatches/config-phicomm-n1.conf)
