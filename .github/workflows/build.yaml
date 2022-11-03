@@ -33,4 +33,4 @@ jobs:
         popd
         git checkout "${VER}"
         echo "${RELEASE}"
-        sudo bash compile.sh docker
+        sudo bash compile.sh docker phicomm-n1
