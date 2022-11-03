@@ -9,12 +9,11 @@ jobs:
       with:
         repository: armbian/build
         fetch-depth: 0
-        path: build
 
     - name: checkout
       uses: actions/checkout@v3
       with:
-        path: build/userpatches
+        path: userpatches
 
     - name: build armbian image
       id: compile
