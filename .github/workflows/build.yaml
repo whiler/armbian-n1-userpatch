@@ -4,6 +4,15 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
+    - name: initialization environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo -E apt-get -qq update
+          sudo -E apt-get -qq upgrade -y
+          sudo -E apt-get -qq autoremove --purge
+
     - name: fetch armbian/build
       uses: actions/checkout@v3
       with:
@@ -16,8 +25,6 @@ jobs:
         path: userpatches
 
     - name: build armbian image
-      id: compile
       run: |
-        pwd
         git checkout $(awk -F '\"' '/LIB_TAG/ {print $2}' userpatches/config-phicomm-n1.conf)
-        bash compile.sh
+        sudo bash compile.sh
