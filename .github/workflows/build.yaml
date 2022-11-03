@@ -1,0 +1,25 @@
+name: build image
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: fetch armbian/build
+      uses: actions/checkout@v3
+      with:
+        repository: armbian/build
+        fetch-depth: 0
+        path: build
+
+    - name: checkout
+      uses: actions/checkout@v3
+      with:
+        path: build/userpatches
+
+    - name: build armbian image
+      id: compile
+      run: |
+        uname -a
+        hostname
+        pwd
+        ls -lh
