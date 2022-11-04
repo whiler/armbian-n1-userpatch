@@ -41,15 +41,15 @@ jobs:
 
     - name: release
       uses: ncipollo/release-action@main
-        if: ${{ steps.build.outputs.status }} == 'success' && !cancelled()
-        with:
-          tag: ${{ steps.build.outputs.version }}
-          artifacts: build/output/images/*.img.gz
-          allowUpdates: true
-          draft: true
-          removeArtifacts: true
-          token: ${{ secrets.GH_TOKEN }}
-          body: |
-            minimal armbian image for Phicomm N1, enjoy it.
-            install it by `armbian-install` command (this command do not touch u-boot).
-            default root password: **1234**
+      if: ${{ steps.build.outputs.status }} == 'success' && !cancelled()
+      with:
+        tag: ${{ steps.build.outputs.version }}
+        artifacts: build/output/images/*.img.gz
+        allowUpdates: true
+        draft: true
+        removeArtifacts: true
+        token: ${{ secrets.GH_TOKEN }}
+        body: |
+          minimal armbian image for Phicomm N1, enjoy it.
+          install it by `armbian-install` command (this command do not touch u-boot).
+          default root password: **1234**
