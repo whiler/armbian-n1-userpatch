@@ -34,6 +34,7 @@ jobs:
         popd
         git checkout "${VER}"
         echo "building ${VERSION} ..."
+        sudo bash compile.sh phicomm-n1
         echo "version=${VERSION}" >> ${GITHUB_OUTPUT}
         echo "status=success" >> ${GITHUB_OUTPUT}
 
@@ -42,7 +43,7 @@ jobs:
       if: ${{ steps.build.outputs.status }} == 'success' && !cancelled()
       with:
         tag: ${{ steps.build.outputs.version }}
-        artifacts: "VERSION"
+        artifacts: "output/images/*.7z,output/debs/*.deb"
         artifactErrorsFailBuild: true
         allowUpdates: true
         draft: true
