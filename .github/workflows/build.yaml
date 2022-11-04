@@ -4,6 +4,15 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
+    - name: initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq upgrade -y
+        sudo -E apt-get -qq autoremove --purge
+
     - name: fetch armbian/build
       uses: actions/checkout@v3
       with:
@@ -16,9 +25,30 @@ jobs:
         path: userpatches
 
     - name: build armbian image
-      id: compile
+      id: build
       run: |
-        uname -a
-        hostname
-        pwd
-        ls -lh
+        VER=$(awk -F '\"' '/LIB_TAG/ {print $2}' userpatches/config-phicomm-n1.conf)
+        pushd userpatches
+          REV=$(git rev-parse --short HEAD)
+          VERSION="${VER}-${REV}"
+        popd
+        git checkout "${VER}"
+        echo "building ${VERSION} ..."
+        sudo bash compile.sh phicomm-n1
+        echo "version=${VERSION}" >> ${GITHUB_OUTPUT}
+        echo "status=success" >> ${GITHUB_OUTPUT}
+
+    - name: release
+      uses: ncipollo/release-action@main
+      if: ${{ steps.build.outputs.status }} == 'success' && !cancelled()
+      with:
+        tag: ${{ steps.build.outputs.version }}
+        artifacts: "output/images/*.7z,output/debs/*.deb"
+        artifactErrorsFailBuild: true
+        allowUpdates: true
+        draft: true
+        removeArtifacts: true
+        body: |
+          minimal armbian image for Phicomm N1, enjoy it.
+          install it by `armbian-install` command (this command do not touch u-boot).
+          default root password: **1234**
