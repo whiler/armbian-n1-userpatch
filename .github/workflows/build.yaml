@@ -42,7 +42,7 @@ jobs:
       if: ${{ steps.build.outputs.status }} == 'success' && !cancelled()
       with:
         tag: ${{ steps.build.outputs.version }}
-        artifacts: "output/images/*.7z,output/debs/*.deb"
+        artifacts: "VERSION"
         artifactErrorsFailBuild: true
         allowUpdates: true
         draft: true
