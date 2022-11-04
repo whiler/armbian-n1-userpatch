@@ -34,21 +34,19 @@ jobs:
         popd
         git checkout "${VER}"
         echo "building ${VERSION} ..."
-        sudo bash compile.sh phicomm-n1
-        find output -type f
         echo "version=${VERSION}" >> ${GITHUB_OUTPUT}
-        echo "status=fail" >> ${GITHUB_OUTPUT}
+        echo "status=success" >> ${GITHUB_OUTPUT}
 
     - name: release
       uses: ncipollo/release-action@main
       if: ${{ steps.build.outputs.status }} == 'success' && !cancelled()
       with:
         tag: ${{ steps.build.outputs.version }}
-        artifacts: build/output/images/*.img.gz
+        artifacts: "output/images/*.7z,output/debs/*.deb"
+        artifactErrorsFailBuild: true
         allowUpdates: true
         draft: true
         removeArtifacts: true
-        token: ${{ secrets.GH_TOKEN }}
         body: |
           minimal armbian image for Phicomm N1, enjoy it.
           install it by `armbian-install` command (this command do not touch u-boot).
