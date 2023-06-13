@@ -26,14 +26,14 @@ jobs:
     - name: build armbian image
       id: build
       run: |
-        VER=$(awk -F '\"' '/LIB_TAG/ {print $2}' userpatches/config-phicomm-n1.conf)
+        VER=$(awk -F '\"' '/^LIB_TAG/ {print $2}' userpatches/config-phicomm-n1.conf)
         pushd userpatches
           REV=$(git rev-parse --short HEAD)
           VERSION="${VER}-${REV}"
         popd
+        sed -i "/LIB_TAG/d" userpatches/config-phicomm-n1.conf
         git checkout "${VER}"
         echo "building ${VERSION} ..."
-        sed -i "/LIB_TAG/d" userpatches/config-phicomm-n1.conf
         sudo bash compile.sh phicomm-n1
         echo "version=${VERSION}" >> ${GITHUB_OUTPUT}
         echo "status=success" >> ${GITHUB_OUTPUT}
