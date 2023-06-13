@@ -26,11 +26,12 @@ jobs:
     - name: build armbian image
       id: build
       run: |
-        VER=$(awk -F '\"' '/LIB_TAG/ {print $2}' userpatches/config-phicomm-n1.conf)
+        VER=$(awk -F '\"' '/^LIB_TAG/ {print $2}' userpatches/config-phicomm-n1.conf)
         pushd userpatches
           REV=$(git rev-parse --short HEAD)
           VERSION="${VER}-${REV}"
         popd
+        sed -i "/LIB_TAG/d" userpatches/config-phicomm-n1.conf
         git checkout "${VER}"
         echo "building ${VERSION} ..."
         sudo bash compile.sh phicomm-n1
@@ -42,7 +43,7 @@ jobs:
       if: ${{ steps.build.outputs.status }} == 'success' && !cancelled()
       with:
         tag: ${{ steps.build.outputs.version }}
-        artifacts: "output/images/*.7z,output/debs/*.deb"
+        artifacts: "output/images/*.*,output/debs/*.*"
         artifactErrorsFailBuild: true
         allowUpdates: true
         draft: true
